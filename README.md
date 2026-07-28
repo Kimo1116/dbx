@@ -100,6 +100,18 @@ CodeMirror 6 with SQL syntax highlighting, metadata-aware autocomplete, `Cmd+Ent
 
 Describe what you want in plain language — get SQL back. DBX can explain queries, optimize SQL, fix errors, and run AI-generated SQL through built-in safety checks. Works with Claude, OpenAI, local models, or any OpenAI-compatible endpoint.
 
+### SQL Review Engine
+
+Before any SQL runs, DBX's built-in rule engine automatically reviews it against 25 production-grade rules across three categories:
+
+**Safety (11 rules)** — catches destructive or risky operations: UPDATE/DELETE without WHERE, tautological WHERE clauses (e.g. `WHERE 1=1`), TRUNCATE TABLE, DROP statements, multi-table UPDATE/DELETE with JOINs, INSERT ... SELECT without LIMIT, INSERT without explicit column list, broad GRANT (e.g. `GRANT ALL ON *.*`), ALTER TABLE DROP COLUMN, file I/O operations (LOAD DATA / COPY FROM), and UPDATE/DELETE with LIMIT but no ORDER BY.
+
+**Performance (10 rules)** — flags common performance anti-patterns: SELECT *, SELECT DISTINCT, functions in WHERE clauses (e.g. `WHERE YEAR(col) = ...`), ORDER BY RAND() / NEWID(), long IN lists (>100 values), NOT IN with subqueries, implicit cartesian products (FROM a, b without JOIN), leading wildcards in LIKE (e.g. `LIKE '%term'`), excessive JOINs (>5 tables), and large table queries without LIMIT (schema-aware).
+
+**Correctness (4 rules)** — detects logic errors: comparing with NULL using `=` instead of `IS NULL`, CASE expressions without ELSE branches, unguarded division (potential division by zero), and COUNT on nullable columns (schema-aware).
+
+The rule engine parses the entire SQL batch as a single AST. Rules are configurable per-connection: enable/disable individual rules, adjust severity, and customize the AI review prompt. Review findings appear inline in the editor with severity badges, detailed explanations, and actionable suggestions. The engine supports MySQL, PostgreSQL, SQLite, SQL Server, ClickHouse, DuckDB, and generic SQL dialects.
+
 ### Data Grid
 
 Virtual-scrolled table that handles large result sets. Inline editing, SQL preview before save, WHERE / ORDER BY controls, DataGrip-style filters, LIKE / NOT LIKE context filters, sorting, full-text search, pagination, column resize, auto-fit, row numbers, zebra stripes, and full cell details. Export or copy as CSV, JSON, Markdown, XLSX, or INSERT statements.

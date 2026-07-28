@@ -100,6 +100,18 @@ CodeMirror 6 语法高亮、元数据感知自动补全、`Cmd+Enter` 执行、�
 
 用自然语言描述你的需求，直接生成 SQL。还能解释查询、优化 SQL、修复错误，并通过内置安全检查执行 AI 生成的 SQL。支持 Claude、OpenAI、本地模型或任何 OpenAI 兼容端点。
 
+### SQL 审查引擎
+
+在任何 SQL 执行之前，DBX 内置的规则引擎会自动对其进行审查，覆盖 25 条生产级规则，分为三大类：
+
+**安全类（11 条规则）** — 拦截破坏性或高风险操作：UPDATE/DELETE 缺少 WHERE 条件、恒真 WHERE 条件（如 `WHERE 1=1`）、TRUNCATE TABLE、DROP 语句、多表 UPDATE/DELETE（含 JOIN）、INSERT ... SELECT 缺少 LIMIT、INSERT 未指定列清单、宽泛权限授予（如 `GRANT ALL ON *.*`）、ALTER TABLE DROP COLUMN、文件 I/O 操作（LOAD DATA / COPY FROM），以及带 LIMIT 但缺少 ORDER BY 的 UPDATE/DELETE。
+
+**性能类（10 条规则）** — 标记常见性能反模式：SELECT *、SELECT DISTINCT、WHERE 中对列使用函数（如 `WHERE YEAR(col) = ...`）、ORDER BY RAND() / NEWID()、超长 IN 列表（>100 个值）、NOT IN 子查询、隐式笛卡尔积（FROM a, b 无 JOIN）、LIKE 前置通配符（如 `LIKE '%term'`）、过多 JOIN（>5 张表），以及大表查询缺少 LIMIT（需 schema 元信息）。
+
+**正确性类（4 条规则）** — 检测逻辑错误：使用 `=` 与 NULL 比较（应使用 `IS NULL`）、CASE 表达式缺少 ELSE 分支、未做除零保护的除法运算，以及对可空列使用 COUNT（需 schema 元信息）。
+
+规则引擎将整个 SQL 批次作为单个 AST 进行解析。规则可按连接单独配置：启用/禁用单条规则、调整严重程度、自定义 AI 审查提示词。审查结果以内联方式显示在编辑器中，包含严重级别标识、详细说明和可操作的建议。引擎支持 MySQL、PostgreSQL、SQLite、SQL Server、ClickHouse、DuckDB 以及通用 SQL 方言。
+
 ### 数据表格
 
 虚拟滚动，轻松应对大型结果集。行内编辑、保存前 SQL 预览、WHERE / ORDER BY 控件、DataGrip 风格过滤器、LIKE / NOT LIKE 右键过滤、排序、全文搜索、分页、列宽调整、自动列宽、行号、斑马纹和完整单元格详情。支持导出或复制为 CSV、JSON、Markdown、XLSX、INSERT 语句。
